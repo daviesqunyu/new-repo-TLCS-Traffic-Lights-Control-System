@@ -356,7 +356,7 @@ h1 {
 }
 
 /* Media Queries */
-@media (max-width: 1200px) {
+@media (max-width: 900px) {
   .container {
     padding: 10px;
     flex-direction: column;
