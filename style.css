@@ -241,73 +241,13 @@ h1 {
   top: calc(50% - 5px);
 }
 
-/* Login Page */
-.login-form, .signup-form {
-  width: 300px;
-  padding: 20px;
-  margin-left: 20px;
-  border-radius: 10px;
-  background-color: #9eda82;
-}
-
-.login-form {
-  border: 1px solid #1f05b1;
-}
-
-.signup-form {
-  background-color: #84c6ca;
-  border: 1px solid #ccc;
-}
-
-.login-form h2, .signup-form h2 {
-  padding: 15px;
-  margin-top: 0;
-  text-align: center;
-}
-
-.login-form input, .signup-form input {
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 10px;
-  box-sizing: border-box;
-}
-
-.login-form button, .signup-form button {
-  width: 100%;
-  padding: 10px;
-  background-color: #4CAF50;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.signup-form button {
-  background-color: #02437c;
-}
-
-/* Forgot Password */
-.forgot-password {
-  margin-top: 10px;
-  text-align: center;
-}
-
-.forgot-password a {
-  color: #333;
-  text-decoration: none;
-}
-
-.forgot-password a:hover {
-  text-decoration: underline;
-}
-
 /* General Container */
 .container {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #ebe085;
+  background-color: #0ebd77;
   padding: 20px;
   border-radius: 5px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
