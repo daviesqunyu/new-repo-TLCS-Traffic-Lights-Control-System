@@ -3,12 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nairobi CBD Traffic Monitor</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Nairobi CBD Traffic Monitor and Map</title>
+
+    <!-- Leaflet CSS for map styling -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+    <style>
+        /* Style for the container that holds both sections */
+        .container {
+            display: flex;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        /* Data container styling */
+        .data-container {
+            display: flex;
+            flex-direction: column; /* Align data cards in a vertical layout */
+            width: 35%; /* Reduce the width for better layout balance */
+            padding: 10px;
+            gap: 15px; /* Add consistent space between the cards */
+            overflow-y: auto; /* Allow scrolling if cards overflow vertically */
+        }
+
+        /* Data cards styling */
+        .data-card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add some shadow for better appearance */
+            width: 100%; /* Ensure cards take full width of the container */
+        }
+
+        /* Map styling */
+        #map {
+            height: 100%;  /* Let the map take the full height of the container */
+            width: 65%;   /* Adjust the width to balance the page layout */
+        }
+
+        h1 {
+            text-align: center;
+            margin: 0;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.8); /* Background for better visibility */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for the header */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: url('t1.jpg') no-repeat center center/cover;
+        }
+    </style>
 </head>
 <body>
+
+    <h1>Nairobi CBD Traffic Monitor and Map</h1>
+
     <div class="container">
-        
+        <!-- Traffic Data Section -->
         <div class="data-container">
             <div class="data-card">
                 <h2>Vehicles on Road</h2>
@@ -39,10 +94,83 @@
                 <div id="speedLimit">Loading...</div>
             </div>
         </div>
-        <div class="visual-representation" id="visualRepresentation">
-            <!-- Road map and traffic status visualization will be dynamically generated here -->
-        </div>
+
+        <!-- Map Section -->
+        <div id="map"></div>
     </div>
-    <script src="script.js"></script>
+
+    <!-- Leaflet.js library -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <script>
+        // Initialize the map and set its view to Nairobi CBD
+        var map = L.map('map').setView([-1.286389, 36.817223], 14);  // Coordinates for Nairobi CBD
+
+        // Set up the OpenStreetMap layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Add a marker at Nairobi CBD
+        var marker = L.marker([-1.286389, 36.817223]).addTo(map)
+            .bindPopup('Nairobi CBD')
+            .openPopup();
+
+        // Coordinates for Nairobi CBD boundary roads (in green)
+        var cbdBoundaryCoordinates = [
+            [-1.283680, 36.826500],  // Moi Avenue (Start)
+            [-1.290000, 36.823500],  // Haile Selassie Avenue (Middle)
+            [-1.286890, 36.813333],  // Kenyatta Avenue (End)
+            [-1.280000, 36.813500],  // University Way
+            [-1.283680, 36.826500]   // Back to Moi Avenue (Complete Loop)
+        ];
+
+        // Draw the boundary in green
+        L.polyline(cbdBoundaryCoordinates, {
+            color: 'green',
+            weight: 4
+        }).addTo(map);
+
+        // Main roads inside Nairobi CBD (in green)
+        var mainRoadsCoordinates = [
+            [
+                [-1.287040, 36.824522], // Kenyatta Ave Start
+                [-1.286652, 36.814898], // Kenyatta Ave End
+            ],
+            [
+                [-1.283680, 36.824502], // Moi Ave Start
+                [-1.283629, 36.815451], // Moi Ave End
+            ],
+            [
+                [-1.290036, 36.822632], // Haile Selassie Start
+                [-1.283752, 36.822663], // Haile Selassie End
+            ],
+            [
+                [-1.283888, 36.815606], // University Way Start
+                [-1.281400, 36.815699]  // University Way End
+            ]
+        ];
+
+        // Add green polylines for the main roads
+        mainRoadsCoordinates.forEach(function(roadCoords) {
+            L.polyline(roadCoords, {color: 'green', weight: 4}).addTo(map);
+        });
+
+        // Placeholder function to simulate fetching traffic data (API integration)
+        function fetchTrafficData() {
+            // Simulate API data fetching (replace this with actual API requests)
+            document.getElementById('vehicleCount').innerText = '200 Vehicles';
+            document.getElementById('pedestrianCount').innerText = '300 Pedestrians';
+            document.getElementById('heavyTrafficRoads').innerText = 'Kenyatta Ave, Moi Ave';
+            document.getElementById('preferredRoute').innerText = 'Use Moi Ave';
+            document.getElementById('weatherCondition').innerText = 'Sunny';
+            document.getElementById('roadCondition').innerText = 'Good';
+            document.getElementById('speedLimit').innerText = '50 km/h';
+        }
+
+        // Call the function to fetch traffic data
+        fetchTrafficData();
+    </script>
+
 </body>
 </html>

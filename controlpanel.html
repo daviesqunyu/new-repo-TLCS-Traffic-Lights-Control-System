@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nairobi CBD Traffic Simulation</title>
+
+    <!-- Leaflet.js -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            background-color: #f4f4f4;
+        }
+
+        #simulation {
+            width: 70%;
+            height: 100vh;
+        }
+
+        #controls {
+            width: 30%;
+            padding: 20px;
+            background-color: #f7f7f7;
+            border-left: 2px solid #333;
+        }
+
+        .control-panel {
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 10px 0;
+            background-color: green;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        button.stop {
+            background-color: red;
+        }
+
+        button:hover {
+            background-color: #444;
+        }
+
+        .traffic-light {
+            width: 20px;
+            height: 60px;
+            background-color: black;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 5px;
+        }
+
+        .light {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+
+        .red-light {
+            background-color: red;
+        }
+
+        .green-light {
+            background-color: green;
+        }
+
+        .off-light {
+            background-color: #333;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Simulation Area -->
+    <div id="simulation">
+        <div id="map"></div>
+    </div>
+
+    <!-- Controls Area -->
+    <div id="controls">
+        <h2>Admin Controls</h2>
+
+        <div class="control-panel">
+            <label for="roadSelect">Select Road:</label>
+            <select id="roadSelect">
+                <option value="kenyatta">Kenyatta Ave</option>
+                <option value="moi">Moi Ave</option>
+                <option value="university">University Way</option>
+            </select>
+        </div>
+
+        <div class="control-panel">
+            <label for="carCount">Number of Cars:</label>
+            <input type="number" id="carCount" min="1" max="50" value="5">
+        </div>
+
+        <button onclick="addCars()">Add Cars</button>
+        <button onclick="removeCars()">Remove Cars</button>
+
+        <div class="control-panel">
+            <button class="stop" onclick="stopCars()">Stop Cars</button>
+            <button onclick="continueCars()">Continue Cars</button>
+        </div>
+
+        <div class="control-panel">
+            <label for="trafficLightControl">Control Traffic Lights:</label>
+            <button onclick="toggleTrafficLights()">Toggle Traffic Lights</button>
+        </div>
+    </div>
+
+    <!-- Leaflet.js -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([-1.286389, 36.817223], 15); // Centered on Nairobi CBD
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Define major roads in Nairobi CBD (approximated as polylines)
+        const roads = {
+            kenyatta: [
+                [-1.2867, 36.8175], // Start of Kenyatta Ave
+                [-1.2873, 36.8226]  // End of Kenyatta Ave
+            ],
+            moi: [
+                [-1.2835, 36.8184], // Start of Moi Ave
+                [-1.2879, 36.8240]  // End of Moi Ave
+            ],
+            university: [
+                [-1.2819, 36.8180], // Start of University Way
+                [-1.2867, 36.8197]  // End of University Way
+            ]
+        };
+
+        // Add polylines for the roads
+        Object.keys(roads).forEach((road) => {
+            L.polyline(roads[road], { color: 'blue', weight: 5 }).addTo(map);
+        });
+
+        let cars = [];
+        let stopCarsAtLight = false;
+
+        function addCars() {
+            const selectedRoad = document.getElementById('roadSelect').value;
+            const numCars = parseInt(document.getElementById('carCount').value);
+            const roadPoints = roads[selectedRoad];
+
+            for (let i = 0; i < numCars; i++) {
+                const carMarker = L.circleMarker(roadPoints[0], { radius: 5, color: randomColor() }).addTo(map);
+                cars.push({
+                    marker: carMarker,
+                    route: roadPoints,
+                    position: 0, // Start at the beginning of the road
+                    speed: Math.random() * 0.0005 + 0.0001 // Random speed
+                });
+            }
+
+            animateCars();
+        }
+
+        function randomColor() {
+            const colors = ['red', 'blue', 'green', 'yellow', 'purple'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function removeCars() {
+            cars.forEach((car) => {
+                map.removeLayer(car.marker);
+            });
+            cars = [];
+        }
+
+        function animateCars() {
+            cars.forEach((car) => {
+                const [start, end] = car.route;
+                if (car.position < 1) {
+                    const lat = start[0] + car.position * (end[0] - start[0]);
+                    const lon = start[1] + car.position * (end[1] - start[1]);
+
+                    car.marker.setLatLng([lat, lon]);
+                    car.position += car.speed;
+
+                    if (stopCarsAtLight && car.position > 0.5) {
+                        car.position -= car.speed; // Pause cars near the traffic light
+                    }
+                }
+            });
+
+            requestAnimationFrame(animateCars);
+        }
+
+        function stopCars() {
+            stopCarsAtLight = true;
+        }
+
+        function continueCars() {
+            stopCarsAtLight = false;
+        }
+
+        let trafficLightState = 'red';
+        function toggleTrafficLights() {
+            trafficLightState = trafficLightState === 'red' ? 'green' : 'red';
+            alert('Traffic light is now ' + trafficLightState);
+            if (trafficLightState === 'green') {
+                continueCars();
+            }
+        }
+    </script>
+</body>
+
+</html>
