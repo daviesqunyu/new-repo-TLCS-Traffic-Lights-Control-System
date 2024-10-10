@@ -4,142 +4,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Traffic Control - Nairobi CBD</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Enhanced Traffic Control - Nairobi CBD</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
+            background-color: #e0e0e0;
+        }
+
+        header {
+            background-color: #343a40;
+            color: white;
+            padding: 15px;
+            text-align: center;
         }
 
         .container {
-            padding: 20px;
-            margin-left: 260px;
-            transition: margin-left 0.3s;
+            display: flex;
         }
 
-        .status,
-        .additionalData {
-            margin-bottom: 20px;
-            background-color: white;
-            padding: 15px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        button {
-            padding: 10px 20px;
-            margin: 5px;
-            cursor: pointer;
-            background-color: #5cb85c;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-
-        #visualRepresentation {
-            width: 100%;
-            height: 400px;
-            border-radius: 5px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
+        /* Sidebar navigation */
         .drawer {
             width: 250px;
+            background-color: #343a40;
+            height: 100vh;
             position: fixed;
-            top: 0;
-            left: -250px;
-            height: 100%;
-            background-color: #333;
-            color: white;
-            padding: 15px;
-            transition: 0.3s;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-        }
-
-        .drawer.open {
-            left: 0;
-        }
-
-        .drawer h2 {
-            margin-top: 0;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
         }
 
         .drawer a {
             color: white;
             text-decoration: none;
             display: block;
-            margin: 10px 0;
-            padding: 5px;
+            margin-bottom: 20px;
+            font-size: 18px;
             transition: background 0.3s;
         }
 
         .drawer a:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 270px;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .status,
+        .traffic-controls {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .status h2,
+        .traffic-controls h2 {
+            margin: 0 0 20px 0;
+        }
+
+        /* Traffic Visualization */
+        #map {
+            width: 100%;
+            height: 400px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .button:hover {
+            background-color: #218838;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 15px;
+            background-color: #343a40;
+            color: white;
+            position: relative;
+            bottom: 0;
+            width: 100%;
         }
     </style>
-    <!-- Load the Google Maps JavaScript API -->
+
+    <!-- Google Charts for data visualization -->
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        // Load Charts API
+        google.charts.load('current', { 'packages': ['corechart'] });
+        google.charts.setOnLoadCallback(drawChart);
+
+        // Simulating dynamic chart data
+        function drawChart() {
+            var data = google.visualization.arrayToDataTable([
+                ['Road', 'Vehicles'],
+                ['Kenyatta Avenue', 80],
+                ['Moi Avenue', 60],
+                ['Haile Selassie', 40],
+                ['University Way', 30]
+            ]);
+
+            var options = {
+                title: 'Traffic Volume on Main Roads',
+                pieHole: 0.4,
+                colors: ['#ff6f61', '#f7b801', '#28a745', '#17a2b8'],
+                chartArea: { width: '90%', height: '80%' },
+            };
+
+            var chart = new google.visualization.PieChart(document.getElementById('trafficChart'));
+            chart.draw(data, options);
+        }
+    </script>
+
+    <!-- Google Maps API -->
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script>
 </head>
 
-<body style="background: url('t1.jpg') no-repeat center center/cover;">
-    <div class="drawer" id="drawer">
-        <h2>Navigation</h2>
+<body>
+
+    <header>
+        <h1>Enhanced Traffic Control - Nairobi CBD</h1>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <div class="drawer">
+        <h2>Admin Panel</h2>
         <a href="#" onclick="fetchTrafficData()">Fetch Traffic Data</a>
         <a href="#" onclick="showMap()">Show Map</a>
-        <!-- Add more navigation items as needed -->
+        <a href="#" onclick="controlLights()">Control Traffic Lights</a>
     </div>
 
-    <div class="container">
-        <button onclick="toggleDrawer()">☰ MENU</button>
-        <div id="status" class="status">
-            <h2>Current Status:</h2>
-            <div id="roadStatus">Road Status: Loading...</div>
-            <div id="pedestrianStatus">Pedestrian Status: Loading...</div>
-            <div id="carStatus">Car Status: Loading...</div>
+    <!-- Main content area -->
+    <div class="main-content">
+        <!-- Traffic Status -->
+        <div class="status">
+            <h2>Current Traffic Status</h2>
+            <div id="trafficChart" style="height: 300px;"></div>
         </div>
 
-        <div id="additionalData" class="additionalData">
-            <h2>Additional Data:</h2>
-            <p>Vehicle Count: <span id="vehicleCount">Loading...</span></p>
-            <p>Pedestrian Count: <span id="pedestrianCount">Loading...</span></p>
-            <p>Heavy Traffic Roads: <span id="heavyTrafficRoads">Loading...</span></p>
-            <p>Preferred Route: <span id="preferredRoute">Loading...</span></p>
-            <p>Weather Condition: <span id="weatherCondition">Loading...</span></p>
-            <p>Road Condition: <span id="roadCondition">Loading...</span></p>
-            <p>Speed Limit: <span id="speedLimit">Loading...</span></p>
+        <!-- Admin Traffic Controls -->
+        <div class="traffic-controls">
+            <h2>Admin Controls</h2>
+            <button class="button" onclick="addCars()">Add Cars</button>
+            <button class="button" onclick="removeCars()">Remove Cars</button>
+            <button class="button" onclick="toggleTraffic()">Toggle Traffic Lights</button>
         </div>
 
-        <div id="visualRepresentation" class="visualRepresentation"></div>
+        <!-- Traffic Map -->
+        <div id="map"></div>
     </div>
 
-    <script src="script.js"></script>
+    <footer>
+        <p>&copy; 2024 Nairobi CBD Traffic Control System. All rights reserved.</p>
+    </footer>
+
     <script>
-        function toggleDrawer() {
-            const drawer = document.getElementById('drawer');
-            const container = document.querySelector('.container');
-            drawer.classList.toggle('open');
-            container.style.marginLeft = drawer.classList.contains('open') ? '260px' : '20px';
+        // Function to toggle the traffic lights
+        function toggleTraffic() {
+            alert("Traffic lights toggled!");
         }
 
+        // Fetch and update simulated traffic data
         function fetchTrafficData() {
-            // Simulate fetching data
-            document.dispatchEvent(new Event('DOMContentLoaded'));
+            alert("Traffic data fetched!");
         }
 
+        // Show map with Nairobi CBD marker
         function showMap() {
-            const visualRepresentation = document.getElementById('visualRepresentation');
-            visualRepresentation.innerHTML = '<div id="map" style="width:100%; height:400px;"></div>';
-            initMap();
-        }
-
-        // Initializing the Google Map
-        function initMap() {
-            const nairobiCBD = { lat: -1.286389, lng: 36.817223 }; // Coordinates for Nairobi CBD
+            const nairobiCBD = { lat: -1.286389, lng: 36.817223 }; // Nairobi CBD coordinates
             const map = new google.maps.Map(document.getElementById("map"), {
                 zoom: 14,
                 center: nairobiCBD,
@@ -151,6 +199,7 @@
             });
         }
     </script>
+
 </body>
 
 </html>
