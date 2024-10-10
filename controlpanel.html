@@ -4,12 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nairobi CBD Traffic Simulation</title>
+    <title>Improved Nairobi CBD Traffic Simulation</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
             display: flex;
             background-color: #f4f4f4;
         }
@@ -17,15 +16,15 @@
         #simulation {
             width: 70%;
             height: 100vh;
-            position: relative;
             background-color: #e0e0e0;
-            border-right: 2px solid #333;
+            position: relative;
         }
 
         #controls {
             width: 30%;
             padding: 20px;
             background-color: #f7f7f7;
+            border-left: 2px solid #333;
         }
 
         .control-panel {
@@ -142,21 +141,21 @@
         canvas.height = canvas.parentElement.offsetHeight;
 
         const circleCenter = { x: canvas.width / 2, y: canvas.height / 2 };
-        const circleRadius = 200;
+        const ovalRadius = { x: 250, y: 150 }; // Making it an oval
 
-        // Roads: Circle for main CBD road, with entry and exit points
+        // Roads: Irregular CBD main road and entry/exit
         const roads = {
-            mainRoad: { type: 'circle', center: circleCenter, radius: circleRadius },
-            entryRoad: { startX: 50, startY: 300, endX: circleCenter.x - circleRadius, endY: circleCenter.y },
-            exitRoad: { startX: circleCenter.x + circleRadius, startY: circleCenter.y, endX: canvas.width - 50, endY: 300 }
+            mainRoad: { type: 'oval', center: circleCenter, radiusX: ovalRadius.x, radiusY: ovalRadius.y },
+            entryRoad: { startX: 50, startY: canvas.height - 100, endX: circleCenter.x - ovalRadius.x, endY: circleCenter.y },
+            exitRoad: { startX: circleCenter.x + ovalRadius.x, startY: circleCenter.y, endX: canvas.width - 50, endY: 100 }
         };
 
         function drawRoads() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw the circular main road
+            // Draw the irregular main road (oval)
             ctx.beginPath();
-            ctx.arc(circleCenter.x, circleCenter.y, circleRadius, 0, 2 * Math.PI);
+            ctx.ellipse(circleCenter.x, circleCenter.y, ovalRadius.x, ovalRadius.y, 0, 0, 2 * Math.PI);
             ctx.strokeStyle = '#333';
             ctx.lineWidth = 15;
             ctx.stroke();
@@ -186,7 +185,7 @@
                 let car = {
                     road: selectedRoad,
                     color: randomColor(),
-                    angle: Math.random() * Math.PI * 2, // Random starting point around the circle
+                    angle: Math.random() * Math.PI * 2,
                     speed: Math.random() * 1 + 1,
                     position: { x: roads.entryRoad.startX, y: roads.entryRoad.startY }
                 };
@@ -213,11 +212,10 @@
             cars.forEach((car) => {
                 if (car.road === 'mainRoad') {
                     car.angle += car.speed / 100;
-                    const x = circleCenter.x + circleRadius * Math.cos(car.angle);
-                    const y = circleCenter.y + circleRadius * Math.sin(car.angle);
+                    const x = circleCenter.x + ovalRadius.x * Math.cos(car.angle);
+                    const y = circleCenter.y + ovalRadius.y * Math.sin(car.angle);
 
                     if (stopCarsAtLight && Math.abs(car.angle - Math.PI) < 0.1) {
-                        // Stop the car near the traffic light
                         car.speed = 0;
                     }
 
