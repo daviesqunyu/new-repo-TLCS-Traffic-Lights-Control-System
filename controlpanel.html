@@ -77,15 +77,27 @@
     <!-- Controls Area -->
     <div id="controls">
         <h2>Admin Traffic Control</h2>
-
         <div class="control-panel">
             <label for="roadSelect">Select Road:</label>
             <select id="roadSelect">
                 <option value="kenyatta">Kenyatta Ave</option>
                 <option value="moi">Moi Ave</option>
                 <option value="university">University Way</option>
+                <option value="haile_selassie">Haile Selassie Ave</option>
+                <option value="tom_mboya">Tom Mboya Street</option>
+                <option value="kimathi">Kimathi Street</option>
+                <option value="waiyaki">Waiyaki Way</option>
+                <option value="ngong">Ngong Road</option>
+                <option value="mama_ngina">Mama Ngina Street</option>
+                <option value="kirinyaga">Kirinyaga Road</option>
+                <option value="nairobi_hill">Nairobi Hill Road</option>
+                <option value="parliament">Parliament Road</option>
+                <option value="valley">Valley Road</option>
+                <option value="koinange">Koinange Street</option>
+                <option value="harambee">Harambee Avenue</option>
             </select>
         </div>
+        
 
         <div class="control-panel">
             <label for="carCount">Number of Cars:</label>
@@ -106,7 +118,7 @@
     <script>
         const map = L.map('map').setView([-1.286389, 36.817223], 15); // Nairobi CBD
 
-        // Add OpenStreetMap tiles without buildings
+        // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap',
             maxZoom: 19,
@@ -116,7 +128,7 @@
         let routeControl;
         let carIntervals = [];
 
-        // Store major roads data
+        // Store major roads data and stop sign locations (at the start of each road)
         const roadData = {
             kenyatta: {
                 start: [-1.2865, 36.8174],
@@ -132,8 +144,76 @@
                 start: [-1.2814, 36.8170],
                 end: [-1.2865, 36.8195],
                 name: 'University Way'
+            },
+            haile_selassie: {
+                start: [-1.2920, 36.8225],
+                end: [-1.2935, 36.8268],
+                name: 'Haile Selassie Ave'
+            },
+            tom_mboya: {
+                start: [-1.2840, 36.8238],
+                end: [-1.2865, 36.8253],
+                name: 'Tom Mboya Street'
+            },
+            kimathi: {
+                start: [-1.2842, 36.8153],
+                end: [-1.2875, 36.8163],
+                name: 'Kimathi Street'
+            },
+            waiyaki: {
+                start: [-1.2773, 36.8090],
+                end: [-1.2844, 36.8222],
+                name: 'Waiyaki Way'
+            },
+            ngong: {
+                start: [-1.2975, 36.7987],
+                end: [-1.3044, 36.8110],
+                name: 'Ngong Road'
+            },
+            mama_ngina: {
+                start: [-1.2863, 36.8210],
+                end: [-1.2872, 36.8197],
+                name: 'Mama Ngina Street'
+            },
+            kirinyaga: {
+                start: [-1.2883, 36.8265],
+                end: [-1.2898, 36.8280],
+                name: 'Kirinyaga Road'
+            },
+            nairobi_hill: {
+                start: [-1.2974, 36.8224],
+                end: [-1.2987, 36.8263],
+                name: 'Nairobi Hill Road'
+            },
+            parliament: {
+                start: [-1.2910, 36.8188],
+                end: [-1.2930, 36.8204],
+                name: 'Parliament Road'
+            },
+            valley: {
+                start: [-1.2965, 36.8100],
+                end: [-1.2990, 36.8170],
+                name: 'Valley Road'
+            },
+            koinange: {
+                start: [-1.2827, 36.8160],
+                end: [-1.2862, 36.8198],
+                name: 'Koinange Street'
+            },
+            harambee: {
+                start: [-1.2925, 36.8200],
+                end: [-1.2940, 36.8232],
+                name: 'Harambee Avenue'
             }
         };
+
+        // Add stop signs at the start of each road
+        Object.keys(roadData).forEach(function(roadKey) {
+            const road = roadData[roadKey];
+            L.marker(road.start, { icon: L.divIcon({ className: 'stop-sign', html: '🛑', iconSize: [24, 24] }) })
+                .addTo(map)
+                .bindPopup('Stop Sign: ' + road.name);
+        });
 
         function addCars() {
             const selectedRoad = document.getElementById('roadSelect').value;
