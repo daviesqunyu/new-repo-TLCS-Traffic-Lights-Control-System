@@ -4,28 +4,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nairobi CBD Traffic Simulation</title>
+    <title>Admin Traffic Control - Nairobi CBD</title>
 
-    <!-- Leaflet.js -->
+    <!-- Leaflet.js and Leaflet Routing Machine CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             display: flex;
-            background-color: #f4f4f4;
+            height: 100vh;
         }
 
         #simulation {
             width: 70%;
-            height: 100vh;
+            height: 100%;
         }
 
         #controls {
             width: 30%;
             padding: 20px;
             background-color: #f7f7f7;
-            border-left: 2px solid #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
         }
 
         .control-panel {
@@ -34,53 +43,21 @@
 
         button {
             padding: 10px 20px;
-            margin: 10px 0;
-            background-color: green;
+            background-color: #28a745;
             color: white;
             border: none;
             cursor: pointer;
             font-size: 16px;
             transition: background-color 0.3s ease;
+            margin-bottom: 10px;
         }
 
         button.stop {
-            background-color: red;
+            background-color: #dc3545;
         }
 
         button:hover {
             background-color: #444;
-        }
-
-        .traffic-light {
-            width: 20px;
-            height: 60px;
-            background-color: black;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 5px;
-        }
-
-        .light {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-        }
-
-        .red-light {
-            background-color: red;
-        }
-
-        .green-light {
-            background-color: green;
-        }
-
-        .off-light {
-            background-color: #333;
         }
 
         #map {
@@ -99,7 +76,7 @@
 
     <!-- Controls Area -->
     <div id="controls">
-        <h2>Admin Controls</h2>
+        <h2>Admin Traffic Control</h2>
 
         <div class="control-panel">
             <label for="roadSelect">Select Road:</label>
@@ -118,67 +95,77 @@
         <button onclick="addCars()">Add Cars</button>
         <button onclick="removeCars()">Remove Cars</button>
 
-        <div class="control-panel">
-            <button class="stop" onclick="stopCars()">Stop Cars</button>
-            <button onclick="continueCars()">Continue Cars</button>
-        </div>
-
-        <div class="control-panel">
-            <label for="trafficLightControl">Control Traffic Lights:</label>
-            <button onclick="toggleTrafficLights()">Toggle Traffic Lights</button>
-        </div>
+        <button class="stop" onclick="stopCars()">Stop Cars</button>
+        <button onclick="continueCars()">Continue Cars</button>
     </div>
 
-    <!-- Leaflet.js -->
+    <!-- Leaflet.js and Leaflet Routing Machine JS -->
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    
     <script>
-        const map = L.map('map').setView([-1.286389, 36.817223], 15); // Centered on Nairobi CBD
+        const map = L.map('map').setView([-1.286389, 36.817223], 15); // Nairobi CBD
 
-        // Add OpenStreetMap tiles
+        // Add OpenStreetMap tiles without buildings
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap',
+            maxZoom: 19,
         }).addTo(map);
 
-        // Define major roads in Nairobi CBD (approximated as polylines)
-        const roads = {
-            kenyatta: [
-                [-1.2867, 36.8175], // Start of Kenyatta Ave
-                [-1.2873, 36.8226]  // End of Kenyatta Ave
-            ],
-            moi: [
-                [-1.2835, 36.8184], // Start of Moi Ave
-                [-1.2879, 36.8240]  // End of Moi Ave
-            ],
-            university: [
-                [-1.2819, 36.8180], // Start of University Way
-                [-1.2867, 36.8197]  // End of University Way
-            ]
+        let carMarkers = [];
+        let routeControl;
+        let carIntervals = [];
+
+        // Store major roads data
+        const roadData = {
+            kenyatta: {
+                start: [-1.2865, 36.8174],
+                end: [-1.2875, 36.8210],
+                name: 'Kenyatta Ave'
+            },
+            moi: {
+                start: [-1.2837, 36.8170],
+                end: [-1.2882, 36.8243],
+                name: 'Moi Ave'
+            },
+            university: {
+                start: [-1.2814, 36.8170],
+                end: [-1.2865, 36.8195],
+                name: 'University Way'
+            }
         };
-
-        // Add polylines for the roads
-        Object.keys(roads).forEach((road) => {
-            L.polyline(roads[road], { color: 'blue', weight: 5 }).addTo(map);
-        });
-
-        let cars = [];
-        let stopCarsAtLight = false;
 
         function addCars() {
             const selectedRoad = document.getElementById('roadSelect').value;
+            const road = roadData[selectedRoad];
             const numCars = parseInt(document.getElementById('carCount').value);
-            const roadPoints = roads[selectedRoad];
 
-            for (let i = 0; i < numCars; i++) {
-                const carMarker = L.circleMarker(roadPoints[0], { radius: 5, color: randomColor() }).addTo(map);
-                cars.push({
-                    marker: carMarker,
-                    route: roadPoints,
-                    position: 0, // Start at the beginning of the road
-                    speed: Math.random() * 0.0005 + 0.0001 // Random speed
-                });
+            // Remove previous route
+            if (routeControl) {
+                map.removeControl(routeControl);
             }
 
-            animateCars();
+            // Highlight the road path using Leaflet Routing Machine
+            routeControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(road.start[0], road.start[1]),
+                    L.latLng(road.end[0], road.end[1])
+                ],
+                lineOptions: {
+                    styles: [{ color: randomColor(), weight: 5 }]
+                },
+                createMarker: function() { return null; }, // Do not show markers for the route waypoints
+                addWaypoints: false
+            }).addTo(map);
+
+            // Add car markers that will follow the road
+            for (let i = 0; i < numCars; i++) {
+                const carMarker = L.circleMarker([road.start[0], road.start[1]], { radius: 5, color: randomColor() }).addTo(map);
+                carMarkers.push(carMarker);
+
+                // Simulate car movement along the waypoints
+                moveCarAlongRoute(carMarker, road.start, road.end);
+            }
         }
 
         function randomColor() {
@@ -186,47 +173,43 @@
             return colors[Math.floor(Math.random() * colors.length)];
         }
 
-        function removeCars() {
-            cars.forEach((car) => {
-                map.removeLayer(car.marker);
-            });
-            cars = [];
-        }
+        function moveCarAlongRoute(carMarker, start, end) {
+            const router = L.Routing.osrmv1(); // Use OSRM routing to get the real waypoints
+            router.route([
+                { latLng: L.latLng(start[0], start[1]) },
+                { latLng: L.latLng(end[0], end[1]) }
+            ], function (err, routes) {
+                if (!err) {
+                    const waypoints = routes[0].coordinates;
 
-        function animateCars() {
-            cars.forEach((car) => {
-                const [start, end] = car.route;
-                if (car.position < 1) {
-                    const lat = start[0] + car.position * (end[0] - start[0]);
-                    const lon = start[1] + car.position * (end[1] - start[1]);
-
-                    car.marker.setLatLng([lat, lon]);
-                    car.position += car.speed;
-
-                    if (stopCarsAtLight && car.position > 0.5) {
-                        car.position -= car.speed; // Pause cars near the traffic light
-                    }
+                    let currentIndex = 0;
+                    const interval = setInterval(function () {
+                        if (currentIndex < waypoints.length) {
+                            carMarker.setLatLng([waypoints[currentIndex].lat, waypoints[currentIndex].lng]);
+                            currentIndex++;
+                        } else {
+                            clearInterval(interval); // Stop moving the car when it reaches the end
+                        }
+                    }, 100); // Adjust the interval time to control the speed of the car
+                    carIntervals.push(interval); // Store intervals for stopping/continuing cars
                 }
             });
+        }
 
-            requestAnimationFrame(animateCars);
+        function removeCars() {
+            carMarkers.forEach(carMarker => map.removeLayer(carMarker));
+            carMarkers = [];
+            carIntervals.forEach(interval => clearInterval(interval)); // Stop all car movements
+            carIntervals = [];
         }
 
         function stopCars() {
-            stopCarsAtLight = true;
+            // Stop all car movements
+            carIntervals.forEach(interval => clearInterval(interval));
         }
 
         function continueCars() {
-            stopCarsAtLight = false;
-        }
-
-        let trafficLightState = 'red';
-        function toggleTrafficLights() {
-            trafficLightState = trafficLightState === 'red' ? 'green' : 'red';
-            alert('Traffic light is now ' + trafficLightState);
-            if (trafficLightState === 'green') {
-                continueCars();
-            }
+            // Continue car movements (currently not implemented, could re-animate cars here)
         }
     </script>
 </body>
